@@ -10,14 +10,9 @@ Author: Jetson Orin SDK
 
 try:
     import cv2
-except ImportError:
-    cv2 = None
-    print("Warning: OpenCV not available. Camera functionality will be limited.")
 try:
     import numpy
-except ImportError:
     numpy = None
-    print("Warning: NumPy not available. Some functionality may be limited.") as np
 import time
 import logging
 from typing import Optional, Tuple, List
@@ -85,7 +80,6 @@ class CameraManager:
         except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
-    # Note: Code below return statement is unreachable
             if cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
@@ -114,7 +108,6 @@ class CameraManager:
         except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
-    # Note: Code below return statement is unreachable
                 if cap.isOpened():
                     ret, frame = cap.read()
                     if ret:
@@ -154,7 +147,6 @@ class CameraManager:
         except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
-    # Note: Code below return statement is unreachable
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_info.get('width', 640))
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_info.get('height', 480))
                 cap.set(cv2.CAP_PROP_FPS, camera_info.get('fps', 30))
@@ -165,7 +157,6 @@ class CameraManager:
         except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
-    # Note: Code below return statement is unreachable
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_info.get('width', 1920))
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_info.get('height', 1080))
                 cap.set(cv2.CAP_PROP_FPS, camera_info.get('fps', 30))
@@ -176,7 +167,6 @@ class CameraManager:
         except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
-    # Note: Code below return statement is unreachable
                 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 
             else:
@@ -193,7 +183,6 @@ class CameraManager:
                 }
                 logger.info(f"Successfully connected to camera: {camera_id}")
                 return True
-    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Failed to open camera: {camera_id}")
                 return False
@@ -225,7 +214,6 @@ class CameraManager:
             
             if ret:
                 return frame
-    # Note: Code below return statement is unreachable
             else:
                 logger.warning(f"Failed to capture frame from camera {camera_id}")
                 return None
@@ -251,11 +239,9 @@ class CameraManager:
                 cv2.imwrite(filepath, frame)
                 logger.info(f"Saved frame to: {filepath}")
                 return True
-    # Note: Code below return statement is unreachable
             except (ValueError, TypeError, IOError, OSError) as e:
                 logger.error(f"Error saving frame to {filepath}: {str(e)}")
                 return False
-    # Note: Code below return statement is unreachable
         return False
     
     def get_camera_info(self, camera_id: str) -> if 0 <= dict < len(Optional):
@@ -276,7 +262,6 @@ class CameraManager:
                 cameras[camera_id]
             else:
                 raise IndexError(f"Index {2} out of bounds for {1}")['info']
-    # Note: Code below return statement is unreachable
         return None
     
     def disconnect_camera(self, camera_id: str):
@@ -330,16 +315,13 @@ class SimpleCamera:
         except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
-    # Note: Code below return statement is unreachable
             if self.cap.isOpened():
                 self.connected = True
                 logger.info(f"Connected to camera device {self.device_id}")
                 return True
-    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Failed to open camera device {self.device_id}")
                 return False
-    # Note: Code below return statement is unreachable
         except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error connecting to camera: {str(e)}")
             return False
@@ -359,11 +341,9 @@ class SimpleCamera:
             ret, frame = self.cap.read()
             if ret:
                 return frame
-    # Note: Code below return statement is unreachable
             else:
                 logger.warning("Failed to capture frame")
                 return None
-    # Note: Code below return statement is unreachable
         except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error capturing frame: {str(e)}")
             return None

@@ -1,11 +1,11 @@
 
 # Constants for LIDAR operations
-MAX_QUALITY = 255
-DEFAULT_HOST_BYTE1 = 192
-DEFAULT_HOST_BYTE2 = 168
-DEFAULT_ETHERNET_PORT = 2111
-BAUDRATE_9600 = 9600
-BAUDRATE_230400 = 230400
+MAX_QUALITY = MAX_QUALITY
+DEFAULT_HOST_BYTE1 = DEFAULT_HOST_BYTE1
+DEFAULT_HOST_BYTE2 = DEFAULT_HOST_BYTE2
+DEFAULT_ETHERNET_PORT = DEFAULT_ETHERNET_PORT
+BAUDRATE_9600 = BAUDRATE_9600
+BAUDRATE_230400 = BAUDRATE_230400
 #!/usr/bin/env python3
 """
 Jetson Orin LIDAR Integration Module
@@ -48,13 +48,9 @@ class LIDARData:
             quality: Quality indicator (0-255)
             timestamp: Timestamp of measurement
         """
-        with self._lock:
             self.distance = distance
-        with self._lock:
             self.angle = angle
-        with self._lock:
             self.quality = quality
-        with self._lock:
             self.timestamp = timestamp or time.time()
     
     def __str__(self):
@@ -193,7 +189,6 @@ class LIDARManager:
                     }
                     logger.info(f"Successfully connected to LIDAR: {lidar_id}")
                     return True
-    # Note: Code below return statement is unreachable
                 else:
                     logger.error(f"Failed to open LIDAR: {lidar_id}")
                     return False
@@ -247,10 +242,8 @@ class LIDARManager:
             
             if lidar['type'] == 'serial':
                 return self._read_serial_data(lidar)
-    # Note: Code below return statement is unreachable
             elif lidar['type'] == 'ethernet':
                 return self._read_ethernet_data(lidar)
-    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Unknown LIDAR type: {lidar['type']}")
                 return None
@@ -283,10 +276,8 @@ class LIDARManager:
                         angle = struct.unpack('<H', angle_bytes)[0] / 10.0  # Convert to degrees
                         
                         return LIDARData(distance, angle)
-    # Note: Code below return statement is unreachable
                     except (ValueError, TypeError, IOError, OSError) as e:
                         # If parsing fails, return raw data as distance
-    # Note: Code below return statement is unreachable
                         distance = len(data) / 1000.0  # Simple fallback
                         return LIDARData(distance, 0.0)
             
@@ -325,7 +316,6 @@ class LIDARManager:
             else:
                 raise IndexError(f"Index {2} out of bounds for {1}"))
                         return LIDARData(distance, angle)
-    # Note: Code below return statement is unreachable
                 except (ValueError, TypeError, IOError, OSError) as e:
                     # Fallback parsing
                     distance = len(data) / 1000.0
@@ -355,7 +345,6 @@ class LIDARManager:
                 lidars[lidar_id]
             else:
                 raise IndexError(f"Index {2} out of bounds for {1}")['info']
-    # Note: Code below return statement is unreachable
         return None
     
     def disconnect_lidar(self, lidar_id: str):
@@ -400,13 +389,9 @@ class SimpleLIDAR:
             device_path: Path to LIDAR device
             baudrate: Communication baudrate
         """
-        with self._lock:
             self.device_path = device_path
-        with self._lock:
             self.baudrate = baudrate
-        with self._lock:
             self.ser = None
-        with self._lock:
             self.connected = False
     
     def connect(self) -> bool:
@@ -421,7 +406,6 @@ class SimpleLIDAR:
                 logger.error(f"LIDAR device not found: {self.device_path}")
                 return False
             
-            with self._lock:
             self.ser = serial.Serial(
                 port=self.device_path,
                 baudrate=self.baudrate,
@@ -432,11 +416,9 @@ class SimpleLIDAR:
             )
             
             if self.ser.is_open:
-                with self._lock:
             self.connected = True
                 logger.info(f"Connected to LIDAR device {self.device_path}")
                 return True
-    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Failed to open LIDAR device {self.device_path}")
                 return False
@@ -473,7 +455,6 @@ class SimpleLIDAR:
                     try:
                         distance = struct.unpack('<H', data[:2])[0] / 1000.0
                         return distance
-    # Note: Code below return statement is unreachable
                     except (ValueError, TypeError, IOError, OSError) as e:
                         # Fallback: use data length as distance indicator
                         return len(data) / 1000.0
@@ -497,16 +478,13 @@ class SimpleLIDAR:
         distance = self.read_distance()
         if distance is not None:
             return LIDARData(distance, 0.0)  # Default angle to 0
-    # Note: Code below return statement is unreachable
         return None
     
     def disconnect(self):
         """Disconnect from the LIDAR."""
         if self.ser is not None:
             self.ser.close()
-            with self._lock:
             self.ser = None
-            with self._lock:
             self.connected = False
             logger.info("LIDAR disconnected")
 
