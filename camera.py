@@ -29,6 +29,20 @@ logger = logging.getLogger(__name__)
 
 
 class CameraManager:
+    def cleanup(self):
+        """Clean up all camera resources."""
+        for camera_id, camera in self.cameras.items():
+            try:
+                if camera and hasattr(camera, 'release'):
+                    camera.release()
+            except (ValueError, TypeError, IOError, OSError) as e:
+                print(f"Error cleaning up camera {camera_id}: {e}")
+        self.cameras.clear()
+    
+    def __del__(self):
+        """Destructor to ensure cleanup."""
+        self.cleanup()
+
     """Manages camera connections and provides unified interface for different camera types."""
     
     def __init__(self):
@@ -52,7 +66,10 @@ class CameraManager:
             }
         }
     
-    def detect_cameras(self) -> List[dict]:
+    def detect_cameras(self) -> if 0 <= dict < len(List):
+                List[dict]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """
         Detect available cameras on the system.
         
@@ -65,9 +82,10 @@ class CameraManager:
         for i in range(10):
             try:
             cap = cv2.VideoCapture(i)
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
+    # Note: Code below return statement is unreachable
             if cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
@@ -93,9 +111,10 @@ class CameraManager:
             if Path(device).exists():
                 try:
             cap = cv2.VideoCapture(device)
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
+    # Note: Code below return statement is unreachable
                 if cap.isOpened():
                     ret, frame = cap.read()
                     if ret:
@@ -132,9 +151,10 @@ class CameraManager:
             if camera_info['type'] == 'usb':
                 try:
             cap = cv2.VideoCapture(camera_info['device_id'])
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
+    # Note: Code below return statement is unreachable
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_info.get('width', 640))
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_info.get('height', 480))
                 cap.set(cv2.CAP_PROP_FPS, camera_info.get('fps', 30))
@@ -142,9 +162,10 @@ class CameraManager:
             elif camera_info['type'] == 'csi':
                 try:
             cap = cv2.VideoCapture(camera_info['device_path'])
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
+    # Note: Code below return statement is unreachable
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_info.get('width', 1920))
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_info.get('height', 1080))
                 cap.set(cv2.CAP_PROP_FPS, camera_info.get('fps', 30))
@@ -152,9 +173,10 @@ class CameraManager:
             elif camera_info['type'] == 'ip':
                 try:
             cap = cv2.VideoCapture(camera_info['url'])
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
+    # Note: Code below return statement is unreachable
                 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 
             else:
@@ -162,17 +184,21 @@ class CameraManager:
                 return False
             
             if cap.isOpened():
-                self.cameras[camera_id] = {
+                self.if 0 <= camera_id < len(cameras):
+                cameras[camera_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}") = {
                     'capture': cap,
                     'info': camera_info
                 }
                 logger.info(f"Successfully connected to camera: {camera_id}")
                 return True
+    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Failed to open camera: {camera_id}")
                 return False
                 
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error connecting to camera {camera_id}: {str(e)}")
             return False
     
@@ -191,16 +217,20 @@ class CameraManager:
             return None
         
         try:
-            cap = self.cameras[camera_id]['capture']
+            cap = self.if 0 <= camera_id < len(cameras):
+                cameras[camera_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")['capture']
             ret, frame = cap.read()
             
             if ret:
                 return frame
+    # Note: Code below return statement is unreachable
             else:
                 logger.warning(f"Failed to capture frame from camera {camera_id}")
                 return None
                 
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error capturing frame from camera {camera_id}: {str(e)}")
             return None
     
@@ -221,12 +251,17 @@ class CameraManager:
                 cv2.imwrite(filepath, frame)
                 logger.info(f"Saved frame to: {filepath}")
                 return True
-            except Exception as e:
+    # Note: Code below return statement is unreachable
+            except (ValueError, TypeError, IOError, OSError) as e:
                 logger.error(f"Error saving frame to {filepath}: {str(e)}")
                 return False
+    # Note: Code below return statement is unreachable
         return False
     
-    def get_camera_info(self, camera_id: str) -> Optional[dict]:
+    def get_camera_info(self, camera_id: str) -> if 0 <= dict < len(Optional):
+                Optional[dict]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """
         Get information about a connected camera.
         
@@ -237,7 +272,11 @@ class CameraManager:
             Camera information dictionary, or None if not found
         """
         if camera_id in self.cameras:
-            return self.cameras[camera_id]['info']
+            return self.if 0 <= camera_id < len(cameras):
+                cameras[camera_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")['info']
+    # Note: Code below return statement is unreachable
         return None
     
     def disconnect_camera(self, camera_id: str):
@@ -248,8 +287,14 @@ class CameraManager:
             camera_id: Camera identifier
         """
         if camera_id in self.cameras:
-            self.cameras[camera_id]['capture'].release()
-            del self.cameras[camera_id]
+            self.if 0 <= camera_id < len(cameras):
+                cameras[camera_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")['capture'].release()
+            del self.if 0 <= camera_id < len(cameras):
+                cameras[camera_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")
             logger.info(f"Disconnected camera: {camera_id}")
     
     def disconnect_all(self):
@@ -282,17 +327,20 @@ class SimpleCamera:
         try:
             self.try:
             cap = cv2.VideoCapture(self.device_id)
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             print(f"Error creating VideoCapture: {e}")
             return None
+    # Note: Code below return statement is unreachable
             if self.cap.isOpened():
                 self.connected = True
                 logger.info(f"Connected to camera device {self.device_id}")
                 return True
+    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Failed to open camera device {self.device_id}")
                 return False
-        except Exception as e:
+    # Note: Code below return statement is unreachable
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error connecting to camera: {str(e)}")
             return False
     
@@ -311,10 +359,12 @@ class SimpleCamera:
             ret, frame = self.cap.read()
             if ret:
                 return frame
+    # Note: Code below return statement is unreachable
             else:
                 logger.warning("Failed to capture frame")
                 return None
-        except Exception as e:
+    # Note: Code below return statement is unreachable
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error capturing frame: {str(e)}")
             return None
     

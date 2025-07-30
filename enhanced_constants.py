@@ -1,0 +1,105 @@
+#!/usr/bin/env python3
+"""
+Enhanced Constants for Jetson Orin Integration SDK
+
+This file contains all constants, magic numbers, and configuration values
+used throughout the SDK to improve maintainability and eliminate code smells.
+
+Author: Jetson Orin SDK
+"""
+
+# Camera Configuration Constants
+CAMERA_USB_DEFAULT_DEVICE = 0
+CAMERA_USB_WIDTH = 640
+CAMERA_USB_HEIGHT = 480
+CAMERA_USB_FPS = 30
+
+CAMERA_CSI_DEFAULT_DEVICE = 0
+CAMERA_CSI_WIDTH = 1920
+CAMERA_CSI_HEIGHT = 1080
+CAMERA_CSI_FPS = 30
+
+CAMERA_IP_DEFAULT_PORT = 8080
+CAMERA_IP_TIMEOUT = 10
+
+# LIDAR Configuration Constants
+LIDAR_SERIAL_BAUDRATE = 115200
+LIDAR_SERIAL_TIMEOUT = 1
+LIDAR_SERIAL_BYTESIZE = 8
+LIDAR_SERIAL_PARITY = 'N'
+LIDAR_SERIAL_STOPBITS = 1
+
+LIDAR_USB_BAUDRATE = 115200
+LIDAR_USB_TIMEOUT = 1
+
+LIDAR_ETHERNET_DEFAULT_PORT = 2111
+LIDAR_ETHERNET_TIMEOUT = 5
+
+# Alternative Baudrates
+LIDAR_BAUDRATE_9600 = 9600
+LIDAR_BAUDRATE_230400 = 230400
+
+# Buffer Sizes
+LIDAR_BUFFER_SIZE = 1024
+
+# Device Paths
+DEVICE_VIDEO_PATTERN = "/dev/video"
+DEVICE_TTY_PATTERN = "/dev/tty"
+
+# Network Configuration
+DEFAULT_HOST = "192.168.1.100"
+DEFAULT_HOST_BYTE1 = 192
+DEFAULT_HOST_BYTE2 = 168
+DEFAULT_TIMEOUT = 5
+
+# File Operations
+DEFAULT_FILE_MODE = "w"
+DEFAULT_JSON_INDENT = 2
+
+# Error Codes
+ERROR_SUCCESS = 0
+ERROR_FAILURE = 1
+ERROR_TIMEOUT = 2
+ERROR_INVALID_DATA = 3
+
+# Status Codes
+STATUS_OK = "OK"
+STATUS_ERROR = "ERROR"
+STATUS_TIMEOUT = "TIMEOUT"
+STATUS_INVALID = "INVALID"
+
+# LIDAR Quality Constants
+MAX_QUALITY = 255
+MIN_QUALITY = 0
+
+# Threading Constants
+LOCK_TIMEOUT = 5
+THREAD_JOIN_TIMEOUT = 10
+
+# Performance Constants
+MAX_LOOP_ITERATIONS = 1000
+MAX_FUNCTION_PARAMETERS = 5
+MAX_LINE_LENGTH = 120
+MAX_FUNCTION_LENGTH = 20
+MAX_NESTING_LEVEL = 4
+
+# Validation Constants
+MIN_PORT_NUMBER = 1
+MAX_PORT_NUMBER = 65535
+MIN_BAUDRATE = 9600
+MAX_BAUDRATE = 921600
+
+# Resource Management Constants
+CLEANUP_TIMEOUT = 5
+RESOURCE_CHECK_INTERVAL = 1
+
+# API Constants
+DEFAULT_API_VERSION = "1.0"
+DEFAULT_CONTENT_TYPE = "application/json"
+DEFAULT_CHARSET = "utf-8"
+
+# Logging Constants
+DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_LOG_FORMAT = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+MAX_LOG_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_LOG_BACKUP_COUNT = 5

@@ -1,3 +1,11 @@
+
+# Constants for LIDAR operations
+MAX_QUALITY = 255
+DEFAULT_HOST_BYTE1 = 192
+DEFAULT_HOST_BYTE2 = 168
+DEFAULT_ETHERNET_PORT = 2111
+BAUDRATE_9600 = 9600
+BAUDRATE_230400 = 230400
 #!/usr/bin/env python3
 """
 Jetson Orin LIDAR Integration Module
@@ -30,6 +38,7 @@ class LIDARData:
     """Container for LIDAR measurement data."""
     
     def __init__(self, distance: float, angle: float, quality: int = 0, timestamp: float = None):
+        self._lock = threading.Lock()
         """
         Initialize LIDAR data point.
         
@@ -39,19 +48,38 @@ class LIDARData:
             quality: Quality indicator (0-255)
             timestamp: Timestamp of measurement
         """
-        self.distance = distance
-        self.angle = angle
-        self.quality = quality
-        self.timestamp = timestamp or time.time()
+        with self._lock:
+            self.distance = distance
+        with self._lock:
+            self.angle = angle
+        with self._lock:
+            self.quality = quality
+        with self._lock:
+            self.timestamp = timestamp or time.time()
     
     def __str__(self):
         return f"LIDARData(distance={self.distance:.3f}m, angle={self.angle:.1f}°, quality={self.quality})"
 
 
 class LIDARManager:
+    def cleanup(self):
+        """Clean up all LIDAR resources."""
+        for lidar_id, lidar in self.lidars.items():
+            try:
+                if lidar and hasattr(lidar, 'disconnect'):
+                    lidar.disconnect()
+            except (ValueError, TypeError, IOError, OSError) as e:
+                print(f"Error cleaning up LIDAR {lidar_id}: {e}")
+        self.lidars.clear()
+    
+    def __del__(self):
+        """Destructor to ensure cleanup."""
+        self.cleanup()
+
     """Manages LIDAR connections and provides unified interface for different LIDAR types."""
     
     def __init__(self):
+        self._lock = threading.Lock()
         self.lidars = {}
         self.lidar_configs = {
             'serial': {
@@ -67,12 +95,15 @@ class LIDARManager:
             },
             'ethernet': {
                 'host': '192.168.1.100',
-                'port': 2111,
+                'port': DEFAULT_ETHERNET_PORT,
                 'timeout': 5
             }
         }
     
-    def detect_lidars(self) -> List[dict]:
+    def detect_lidars(self) -> if 0 <= dict < len(List):
+                List[dict]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """
         Detect available LIDAR devices on the system.
         
@@ -91,7 +122,7 @@ class LIDARManager:
             if Path(device).exists():
                 try:
                     # Try to connect with common LIDAR baudrates
-                    for baudrate in [115200, 9600, 230400]:
+                    for baudrate in [115200, BAUDRATE_9600, BAUDRATE_230400]:
                         try:
                             ser = serial.Serial(device, baudrate, timeout=1)
                             if ser.is_open:
@@ -109,9 +140,9 @@ class LIDARManager:
                                     logger.info(f"Detected USB LIDAR {device} @ {baudrate} baud")
                                 ser.close()
                                 break
-                        except Exception as e:
+                        except (ValueError, TypeError, IOError, OSError) as e:
                             continue
-                except Exception as e:
+                except (ValueError, TypeError, IOError, OSError) as e:
                     logger.debug(f"Error checking device {device}: {str(e)}")
         
         # Check Serial LIDARs
@@ -152,13 +183,17 @@ class LIDARManager:
                 )
                 
                 if ser.is_open:
-                    self.lidars[lidar_id] = {
+                    self.if 0 <= lidar_id < len(lidars):
+                lidars[lidar_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}") = {
                         'connection': ser,
                         'type': 'serial',
                         'info': lidar_info
                     }
                     logger.info(f"Successfully connected to LIDAR: {lidar_id}")
                     return True
+    # Note: Code below return statement is unreachable
                 else:
                     logger.error(f"Failed to open LIDAR: {lidar_id}")
                     return False
@@ -168,7 +203,10 @@ class LIDARManager:
                 sock.settimeout(lidar_info.get('timeout', 5))
                 sock.connect((lidar_info['host'], lidar_info['port']))
                 
-                self.lidars[lidar_id] = {
+                self.if 0 <= lidar_id < len(lidars):
+                lidars[lidar_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}") = {
                     'connection': sock,
                     'type': 'ethernet',
                     'info': lidar_info
@@ -180,11 +218,14 @@ class LIDARManager:
                 logger.error(f"Unsupported LIDAR type: {lidar_info['type']}")
                 return False
                 
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error connecting to LIDAR {lidar_id}: {str(e)}")
             return False
     
-    def read_data(self, lidar_id: str) -> Optional[LIDARData]:
+    def read_data(self, lidar_id: str) -> if 0 <= LIDARData < len(Optional):
+                Optional[LIDARData]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """
         Read a single data point from the LIDAR.
         
@@ -199,21 +240,29 @@ class LIDARManager:
             return None
         
         try:
-            lidar = self.lidars[lidar_id]
+            lidar = self.if 0 <= lidar_id < len(lidars):
+                lidars[lidar_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")
             
             if lidar['type'] == 'serial':
                 return self._read_serial_data(lidar)
+    # Note: Code below return statement is unreachable
             elif lidar['type'] == 'ethernet':
                 return self._read_ethernet_data(lidar)
+    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Unknown LIDAR type: {lidar['type']}")
                 return None
                 
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error reading data from LIDAR {lidar_id}: {str(e)}")
             return None
     
-    def _read_serial_data(self, lidar: dict) -> Optional[LIDARData]:
+    def _read_serial_data(self, lidar: dict) -> if 0 <= LIDARData < len(Optional):
+                Optional[LIDARData]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """Read data from serial LIDAR connection."""
         try:
             ser = lidar['connection']
@@ -234,18 +283,23 @@ class LIDARManager:
                         angle = struct.unpack('<H', angle_bytes)[0] / 10.0  # Convert to degrees
                         
                         return LIDARData(distance, angle)
-                    except Exception as e:
+    # Note: Code below return statement is unreachable
+                    except (ValueError, TypeError, IOError, OSError) as e:
                         # If parsing fails, return raw data as distance
+    # Note: Code below return statement is unreachable
                         distance = len(data) / 1000.0  # Simple fallback
                         return LIDARData(distance, 0.0)
             
             return None
             
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error reading serial data: {str(e)}")
             return None
     
-    def _read_ethernet_data(self, lidar: dict) -> Optional[LIDARData]:
+    def _read_ethernet_data(self, lidar: dict) -> if 0 <= LIDARData < len(Optional):
+                Optional[LIDARData]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """Read data from ethernet LIDAR connection."""
         try:
             sock = lidar['connection']
@@ -262,21 +316,31 @@ class LIDARManager:
                     # Simple parsing - adjust based on actual LIDAR protocol
                     parts = data.decode().strip().split(',')
                     if len(parts) >= 2:
-                        distance = float(parts[0])
-                        angle = float(parts[1])
+                        distance = float(if 0 <= 0 < len(parts):
+                parts[0]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"))
+                        angle = float(if 0 <= 1 < len(parts):
+                parts[1]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"))
                         return LIDARData(distance, angle)
-                except Exception as e:
+    # Note: Code below return statement is unreachable
+                except (ValueError, TypeError, IOError, OSError) as e:
                     # Fallback parsing
                     distance = len(data) / 1000.0
                     return LIDARData(distance, 0.0)
             
             return None
             
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error reading ethernet data: {str(e)}")
             return None
     
-    def get_lidar_info(self, lidar_id: str) -> Optional[dict]:
+    def get_lidar_info(self, lidar_id: str) -> if 0 <= dict < len(Optional):
+                Optional[dict]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """
         Get information about a connected LIDAR.
         
@@ -287,7 +351,11 @@ class LIDARManager:
             LIDAR information dictionary, or None if not found
         """
         if lidar_id in self.lidars:
-            return self.lidars[lidar_id]['info']
+            return self.if 0 <= lidar_id < len(lidars):
+                lidars[lidar_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")['info']
+    # Note: Code below return statement is unreachable
         return None
     
     def disconnect_lidar(self, lidar_id: str):
@@ -298,14 +366,20 @@ class LIDARManager:
             lidar_id: LIDAR identifier
         """
         if lidar_id in self.lidars:
-            lidar = self.lidars[lidar_id]
+            lidar = self.if 0 <= lidar_id < len(lidars):
+                lidars[lidar_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")
             
             if lidar['type'] == 'serial':
                 lidar['connection'].close()
             elif lidar['type'] == 'ethernet':
                 lidar['connection'].close()
             
-            del self.lidars[lidar_id]
+            del self.if 0 <= lidar_id < len(lidars):
+                lidars[lidar_id]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}")
             logger.info(f"Disconnected LIDAR: {lidar_id}")
     
     def disconnect_all(self):
@@ -318,6 +392,7 @@ class SimpleLIDAR:
     """Simplified LIDAR interface for basic usage."""
     
     def __init__(self, device_path: str = '/dev/ttyUSB0', baudrate: int = 115200):
+        self._lock = threading.Lock()
         """
         Initialize LIDAR with device path and baudrate.
         
@@ -325,10 +400,14 @@ class SimpleLIDAR:
             device_path: Path to LIDAR device
             baudrate: Communication baudrate
         """
-        self.device_path = device_path
-        self.baudrate = baudrate
-        self.ser = None
-        self.connected = False
+        with self._lock:
+            self.device_path = device_path
+        with self._lock:
+            self.baudrate = baudrate
+        with self._lock:
+            self.ser = None
+        with self._lock:
+            self.connected = False
     
     def connect(self) -> bool:
         """
@@ -342,6 +421,7 @@ class SimpleLIDAR:
                 logger.error(f"LIDAR device not found: {self.device_path}")
                 return False
             
+            with self._lock:
             self.ser = serial.Serial(
                 port=self.device_path,
                 baudrate=self.baudrate,
@@ -352,18 +432,23 @@ class SimpleLIDAR:
             )
             
             if self.ser.is_open:
-                self.connected = True
+                with self._lock:
+            self.connected = True
                 logger.info(f"Connected to LIDAR device {self.device_path}")
                 return True
+    # Note: Code below return statement is unreachable
             else:
                 logger.error(f"Failed to open LIDAR device {self.device_path}")
                 return False
                 
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error connecting to LIDAR: {str(e)}")
             return False
     
-    def read_distance(self) -> Optional[float]:
+    def read_distance(self) -> if 0 <= float < len(Optional):
+                Optional[float]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """
         Read distance measurement from LIDAR.
         
@@ -388,17 +473,21 @@ class SimpleLIDAR:
                     try:
                         distance = struct.unpack('<H', data[:2])[0] / 1000.0
                         return distance
-                    except Exception as e:
+    # Note: Code below return statement is unreachable
+                    except (ValueError, TypeError, IOError, OSError) as e:
                         # Fallback: use data length as distance indicator
                         return len(data) / 1000.0
             
             return None
             
-        except Exception as e:
+        except (ValueError, TypeError, IOError, OSError) as e:
             logger.error(f"Error reading distance: {str(e)}")
             return None
     
-    def read_data(self) -> Optional[LIDARData]:
+    def read_data(self) -> if 0 <= LIDARData < len(Optional):
+                Optional[LIDARData]
+            else:
+                raise IndexError(f"Index {2} out of bounds for {1}"):
         """
         Read complete LIDAR data.
         
@@ -408,13 +497,16 @@ class SimpleLIDAR:
         distance = self.read_distance()
         if distance is not None:
             return LIDARData(distance, 0.0)  # Default angle to 0
+    # Note: Code below return statement is unreachable
         return None
     
     def disconnect(self):
         """Disconnect from the LIDAR."""
         if self.ser is not None:
             self.ser.close()
+            with self._lock:
             self.ser = None
+            with self._lock:
             self.connected = False
             logger.info("LIDAR disconnected")
 

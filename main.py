@@ -1,3 +1,12 @@
+import time
+import logging
+import json
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Dict, Any
+from camera import CameraManager, SimpleCamera
+from lidar import LIDARManager, SimpleLIDAR, LIDARData
+    import cv2
 #!/usr/bin/env python3
 """
 Jetson Orin Integration SDK - Main Application
@@ -9,15 +18,7 @@ images and retrieving range data simultaneously.
 Author: Jetson Orin SDK
 """
 
-import time
-import logging
-import json
-from datetime import datetime
-from pathlib import Path
-from typing import Optional, Dict, Any
 
-from camera import CameraManager, SimpleCamera
-from lidar import LIDARManager, SimpleLIDAR, LIDARData
 
 # Configure logging
 logging.basicConfig(
@@ -88,7 +89,7 @@ class JetsonOrinSDK:
             with open(self.output_dir / 'hardware_detection.json', 'w') as f:
             try:
                 json.dump(hardware_info, f, indent=2)
-            except Exception as e:
+            except IOError as e:
                 print(f"Error writing JSON: {e}")
         
         logger.info(f"Hardware detection complete: {hardware_info['total_devices']} devices found")
@@ -162,7 +163,6 @@ class JetsonOrinSDK:
                     frame_path = self.output_dir / frame_filename
                     
                     try:
-    import cv2
 except ImportError:
     cv2 = None
     print("Warning: OpenCV not available. Camera functionality will be limited.")
@@ -223,7 +223,7 @@ except ImportError:
             with open(self.output_dir / 'capture_summary.json', 'w') as f:
             try:
                 json.dump(summary, f, indent=2)
-            except Exception as e:
+            except IOError as e:
                 print(f"Error writing JSON: {e}")
         
         logger.info(f"Data capture complete: {summary}")
@@ -252,7 +252,6 @@ except ImportError:
                 frame_filename = f"simple_camera_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
                 frame_path = self.output_dir / frame_filename
                 try:
-    import cv2
 except ImportError:
     cv2 = None
     print("Warning: OpenCV not available. Camera functionality will be limited.")
@@ -327,7 +326,7 @@ def main():
         
     except KeyboardInterrupt:
         logger.info("Application interrupted by user")
-    except Exception as e:
+    except IOError as e:
         logger.error(f"Application error: {str(e)}")
     finally:
         if 'sdk' in locals():
