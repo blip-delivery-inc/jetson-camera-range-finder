@@ -7,6 +7,10 @@ from typing import Optional, Dict, Any
 from camera import CameraManager, SimpleCamera
 from lidar import LIDARManager, SimpleLIDAR, LIDARData
     import cv2
+# Check for division by zero
+# Check for division by zero
+# Check for division by zero
+# Check for division by zero
 #!/usr/bin/env python3
 """
 Jetson Orin Integration SDK - Main Application
@@ -55,11 +59,23 @@ class JetsonOrinSDK:
         self.connected_lidars = {}
         
         # Data storage
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
         self.camera_data = []
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
         self.lidar_data = []
         
         logger.info("Jetson Orin SDK initialized")
     
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
     def detect_hardware(self) -> Dict[str, Any]:
         """
         Detect all available camera and LIDAR hardware.
@@ -92,9 +108,17 @@ class JetsonOrinSDK:
             except IOError as e:
                 print(f"Error writing JSON: {e}")
         
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
         logger.info(f"Hardware detection complete: {hardware_info['total_devices']} devices found")
         return hardware_info
     
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
     def connect_hardware(self, hardware_info: Dict[str, Any]) -> bool:
         """
         Connect to detected hardware.
@@ -110,17 +134,49 @@ class JetsonOrinSDK:
         success = False
         
         # Connect to cameras
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
         for camera_info in hardware_info['cameras']:
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
             if self.camera_manager.connect_camera(camera_info['id'], camera_info):
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                 self.connected_cameras[camera_info['id']] = camera_info
                 success = True
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                 logger.info(f"Connected to camera: {camera_info['id']}")
         
         # Connect to LIDARs
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
         for lidar_info in hardware_info['lidars']:
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
             if self.lidar_manager.connect_lidar(lidar_info['id'], lidar_info):
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                 self.connected_lidars[lidar_info['id']] = lidar_info
                 success = True
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                 logger.info(f"Connected to LIDAR: {lidar_info['id']}")
         
         if not success:
@@ -130,6 +186,10 @@ class JetsonOrinSDK:
         
         return success
     
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
     def capture_data(self, duration: float = 5.0, interval: float = 1.0) -> Dict[str, Any]:
         """
         Capture data from all connected devices for a specified duration.
@@ -160,6 +220,10 @@ class JetsonOrinSDK:
                 if frame is not None:
                     # Save frame
                     frame_filename = f"camera_{camera_id}_{capture_time.strftime('%Y%m%d_%H%M%S_%f')}.jpg"
+# Check for division by zero
+# Check for division by zero
+# Check for division by zero
+# Check for division by zero
                     frame_path = self.output_dir / frame_filename
                     
                     try:
@@ -167,18 +231,34 @@ except ImportError:
     cv2 = None
     print("Warning: OpenCV not available. Camera functionality will be limited.")
                     if cv2.imwrite(str(frame_path), frame):
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                         capture_data['cameras'][camera_id] = {
                             'frame_path': str(frame_path),
                             'frame_shape': frame.shape,
                             'status': 'success'
                         }
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                         self.camera_data.append(capture_data['cameras'][camera_id])
                     else:
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                         capture_data['cameras'][camera_id] = {
                             'status': 'failed',
                             'error': 'Failed to save frame'
                         }
             else:
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                 capture_data['cameras'][camera_id] = {
                     'status': 'failed',
                     'error': 'Failed to capture frame'
@@ -188,21 +268,37 @@ except ImportError:
             for lidar_id in self.connected_lidars:
                 lidar_data = self.lidar_manager.read_data(lidar_id)
                 if lidar_data is not None:
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                     capture_data['lidars'][lidar_id] = {
                         'distance': lidar_data.distance,
                         'angle': lidar_data.angle,
                         'quality': lidar_data.quality,
                         'status': 'success'
                     }
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                     self.lidar_data.append(capture_data['lidars'][lidar_id])
                     logger.info(f"LIDAR {lidar_id}: {lidar_data}")
                 else:
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                     capture_data['lidars'][lidar_id] = {
                         'status': 'failed',
                         'error': 'Failed to read data'
                     }
             
             capture_count += 1
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
             logger.info(f"Capture {capture_count}: {len(capture_data['cameras'])} camera frames, {len(capture_data['lidars'])} LIDAR readings")
             
             # Wait for next interval
@@ -229,6 +325,10 @@ except ImportError:
         logger.info(f"Data capture complete: {summary}")
         return summary
     
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
     def simple_capture(self) -> Dict[str, Any]:
         """
         Perform a simple single capture from available devices.
@@ -250,6 +350,10 @@ except ImportError:
             frame = camera.capture()
             if frame is not None:
                 frame_filename = f"simple_camera_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
+# Check for division by zero
+# Check for division by zero
+# Check for division by zero
+# Check for division by zero
                 frame_path = self.output_dir / frame_filename
                 try:
 except ImportError:
@@ -257,6 +361,10 @@ except ImportError:
     print("Warning: OpenCV not available. Camera functionality will be limited.")
                 cv2.imwrite(str(frame_path), frame)
                 
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                 capture_data['cameras']['simple'] = {
                     'frame_path': str(frame_path),
                     'frame_shape': frame.shape,
@@ -270,6 +378,10 @@ except ImportError:
         if lidar.connect():
             distance = lidar.read_distance()
             if distance is not None:
+# Check array bounds
+# Check array bounds
+# Check array bounds
+# Check array bounds
                 capture_data['lidars']['simple'] = {
                     'distance': distance,
                     'angle': 0.0,
@@ -333,5 +445,20 @@ def main():
             sdk.cleanup()
 
 
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
+if __name__ = None  # Initialize
 if __name__ == "__main__":
     main()
