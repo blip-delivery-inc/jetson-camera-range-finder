@@ -20,6 +20,7 @@ import json
 import logging
 import argparse
 import threading
+import cv2
 from datetime import datetime
 from pathlib import Path
 
@@ -214,7 +215,6 @@ class JetsonSDK:
                     image_filename = f"image_{int(timestamp)}.jpg"
                     image_path = self.output_dir / image_filename
                     
-                    import cv2
                     cv2.imwrite(str(image_path), frame)
                     
                     data["camera"] = {
@@ -400,21 +400,25 @@ class JetsonSDK:
         logger.info("Cleaning up SDK resources...")
         
         # Stop any running captures
-        if self.is_running:
+        if hasattr(self, 'is_running') and self.is_running:
             self.stop_continuous_capture()
         
         # Disconnect devices
-        if self.camera:
+        if hasattr(self, 'camera') and self.camera:
             self.camera.disconnect()
         
-        if self.lidar:
+        if hasattr(self, 'lidar') and self.lidar:
             self.lidar.disconnect()
         
         logger.info("SDK cleanup completed")
     
     def __del__(self):
         """Destructor to ensure cleanup"""
-        self.cleanup()
+        try:
+            self.cleanup()
+        except AttributeError:
+            # Handle case where object wasn't fully initialized
+            pass
 
 
 def main():
