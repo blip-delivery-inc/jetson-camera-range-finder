@@ -56,6 +56,24 @@ class JetsonCamera:
         self.cap = None
         self.is_connected = False
         
+        # Validate camera ID
+        if camera_id < 0:
+            raise CameraError(f"Camera ID must be non-negative, got: {camera_id}")
+        
+        # Validate dimensions
+        if width <= 0 or height <= 0:
+            raise CameraError(f"Width and height must be positive, got: {width}x{height}")
+        
+        # Validate reasonable dimension limits
+        if width > 10000 or height > 10000:
+            raise CameraError(f"Dimensions too large (max 10000x10000), got: {width}x{height}")
+        
+        # Validate FPS
+        if fps <= 0:
+            raise CameraError(f"FPS must be positive, got: {fps}")
+        if fps > 240:  # Reasonable upper limit for most cameras
+            raise CameraError(f"FPS too high (max 240), got: {fps}")
+        
         # Validate camera type
         if self.camera_type not in ["usb", "csi", "ip"]:
             raise CameraError(f"Unsupported camera type: {camera_type}")
@@ -349,7 +367,8 @@ def detect_cameras() -> Dict[str, list]:
                     detected["csi"].append(i)
                     logger.info(f"CSI camera detected at sensor-id {i}")
                 cap.release()
-        except Exception:
+        except Exception as e:
+            logger.debug(f"CSI camera {i} detection failed: {e}")
             continue
     
     return detected

@@ -56,6 +56,14 @@ class JetsonSDK:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         
+        # Validate output directory is writable
+        try:
+            test_file = self.output_dir / ".write_test"
+            test_file.write_text("test")
+            test_file.unlink()
+        except (PermissionError, OSError) as e:
+            raise RuntimeError(f"Output directory is not writable: {output_dir}. Error: {e}")
+        
         # Device instances
         self.camera = None
         self.lidar = None

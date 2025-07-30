@@ -89,6 +89,10 @@ class JetsonLidar:
             ip_port: Network port for network LIDAR
             timeout: Communication timeout in seconds
         """
+        # Validate LIDAR type
+        if not isinstance(lidar_type, LidarType):
+            raise LidarError(f"Invalid LIDAR type: {lidar_type}. Must be a LidarType enum value.")
+        
         self.lidar_type = lidar_type
         self.port = port
         self.baudrate = baudrate
