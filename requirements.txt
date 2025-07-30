@@ -1,0 +1,16 @@
+# Core dependencies
+numpy>=1.21.0
+opencv-python>=4.5.0
+
+# Serial communication
+pyserial>=3.5
+
+# Optional dependencies for examples
+matplotlib>=3.5.0  # For plotting and visualization
+
+# Jetson-specific (these may need to be installed separately on Jetson)
+# jetson-stats  # For system monitoring (install with: pip install jetson-stats)
+
+# Development dependencies (optional)
+# pytest>=6.0.0  # For testing
+# black>=21.0.0  # For code formatting
