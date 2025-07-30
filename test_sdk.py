@@ -534,12 +534,13 @@ def main():
         # Create test suite
         test_suite = unittest.TestSuite()
         
-        # Add test cases
-        test_suite.addTest(unittest.makeSuite(TestJetsonCamera))
-        test_suite.addTest(unittest.makeSuite(TestJetsonLidar))
-        test_suite.addTest(unittest.makeSuite(TestJetsonSDK))
-        test_suite.addTest(unittest.makeSuite(TestErrorHandling))
-        test_suite.addTest(unittest.makeSuite(TestIntegration))
+        # Add test cases using TestLoader (makeSuite is deprecated in Python 3.13+)
+        loader = unittest.TestLoader()
+        test_suite.addTest(loader.loadTestsFromTestCase(TestJetsonCamera))
+        test_suite.addTest(loader.loadTestsFromTestCase(TestJetsonLidar))
+        test_suite.addTest(loader.loadTestsFromTestCase(TestJetsonSDK))
+        test_suite.addTest(loader.loadTestsFromTestCase(TestErrorHandling))
+        test_suite.addTest(loader.loadTestsFromTestCase(TestIntegration))
         
         # Run tests
         runner = unittest.TextTestRunner(verbosity=2 if args.verbose else 1)

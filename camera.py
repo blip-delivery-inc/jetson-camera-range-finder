@@ -117,32 +117,56 @@ class JetsonCamera:
         """Connect to CSI camera using GStreamer pipeline"""
         logger.info(f"Connecting to CSI camera {self.camera_id}")
         
-        # GStreamer pipeline for CSI camera on Jetson
-        gst_pipeline = (
-            f"nvarguscamerasrc sensor-id={self.camera_id} ! "
-            f"video/x-raw(memory:NVMM), width={self.width}, height={self.height}, "
-            f"format=NV12, framerate={self.fps}/1 ! "
-            "nvvidconv flip-method=0 ! "
-            "video/x-raw, width=1920, height=1080, format=BGRx ! "
-            "videoconvert ! "
-            "video/x-raw, format=BGR ! appsink"
-        )
+        # Try multiple GStreamer pipelines for better compatibility
+        pipelines = [
+            # NVIDIA Argus camera pipeline (preferred for Jetson)
+            (
+                f"nvarguscamerasrc sensor-id={self.camera_id} ! "
+                f"video/x-raw(memory:NVMM), width={self.width}, height={self.height}, "
+                f"format=NV12, framerate={self.fps}/1 ! "
+                "nvvidconv flip-method=0 ! "
+                f"video/x-raw, width={self.width}, height={self.height}, format=BGRx ! "
+                "videoconvert ! "
+                "video/x-raw, format=BGR ! appsink drop=1"
+            ),
+            # Alternative pipeline without NVMM memory
+            (
+                f"nvarguscamerasrc sensor-id={self.camera_id} ! "
+                f"video/x-raw, width={self.width}, height={self.height}, "
+                f"format=NV12, framerate={self.fps}/1 ! "
+                "nvvidconv ! "
+                "video/x-raw, format=BGRx ! "
+                "videoconvert ! "
+                "video/x-raw, format=BGR ! appsink"
+            ),
+            # Fallback V4L2 pipeline
+            (
+                f"v4l2src device=/dev/video{self.camera_id} ! "
+                f"video/x-raw, width={self.width}, height={self.height}, framerate={self.fps}/1 ! "
+                "videoconvert ! "
+                "video/x-raw, format=BGR ! appsink"
+            )
+        ]
         
-        try:
-            self.cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
-            if self.cap.isOpened():
-                # Test frame capture
-                ret, frame = self.cap.read()
-                if ret and frame is not None:
-                    self.is_connected = True
-                    logger.info(f"CSI camera {self.camera_id} connected successfully")
-                    return True
-                else:
-                    self.cap.release()
-        except Exception as e:
-            logger.error(f"CSI camera connection failed: {e}")
+        # Try each pipeline until one works
+        for i, gst_pipeline in enumerate(pipelines):
+            try:
+                logger.info(f"Trying CSI pipeline {i+1}/{len(pipelines)}")
+                self.cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
+                if self.cap.isOpened():
+                    # Test frame capture
+                    ret, frame = self.cap.read()
+                    if ret and frame is not None:
+                        self.is_connected = True
+                        logger.info(f"CSI camera {self.camera_id} connected successfully with pipeline {i+1}")
+                        return True
+                    else:
+                        self.cap.release()
+            except Exception as e:
+                logger.warning(f"CSI pipeline {i+1} failed: {e}")
+                continue
         
-        logger.error(f"Failed to connect to CSI camera {self.camera_id}")
+        logger.error(f"Failed to connect to CSI camera {self.camera_id} with all pipelines")
         return False
     
     def _connect_ip(self) -> bool:
