@@ -1,0 +1,16 @@
+{
+  "cameras": {
+    "usb": [],
+    "csi": []
+  },
+  "lidars": [
+    {
+      "port": "/dev/ttyS0",
+      "description": "n/a",
+      "hwid": "n/a",
+      "type": "serial",
+      "likely_type": "generic_serial"
+    }
+  ],
+  "timestamp": "2025-07-30T14:44:03.111856"
+}

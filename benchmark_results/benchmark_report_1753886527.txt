@@ -1,0 +1,24 @@
+============================================================
+JETSON ORIN SDK PERFORMANCE BENCHMARK REPORT
+============================================================
+Timestamp: 2025-07-30T14:42:05.804361
+
+SYSTEM INFORMATION:
+  Platform: Unknown
+  CPU Cores: 4
+  Total Memory: 15.62 GB
+  OpenCV Version: 4.12.0
+  JetPack Version: None
+
+CAMERA PERFORMANCE:
+  Detection Time: 0.000s
+  USB Cameras: 0
+  CSI Cameras: 0
+
+RESOURCE USAGE:
+  Average CPU: 2.3%
+  Peak CPU: 2.3%
+  Average Memory: 7.2%
+  Peak Memory: 0.80 GB
+
+============================================================
