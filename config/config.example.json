@@ -1,0 +1,93 @@
+{
+  "system": {
+    "name": "Jetson Nano Orin Edge SDK",
+    "version": "1.0.0",
+    "log_level": "INFO",
+    "data_dir": "./data"
+  },
+  "cameras": {
+    "enabled": true,
+    "devices": [
+      {
+        "id": "camera_0",
+        "name": "Front Camera",
+        "type": "usb",
+        "device_id": 0,
+        "width": 640,
+        "height": 480,
+        "fps": 30,
+        "format": "BGR",
+        "enabled": true
+      },
+      {
+        "id": "camera_1", 
+        "name": "Side Camera",
+        "type": "usb",
+        "device_id": 1,
+        "width": 640,
+        "height": 480,
+        "fps": 30,
+        "format": "BGR",
+        "enabled": false
+      }
+    ]
+  },
+  "laser": {
+    "enabled": true,
+    "device": {
+      "id": "laser_0",
+      "name": "Laser Range Finder",
+      "type": "uart",
+      "port": "/dev/ttyUSB0",
+      "baudrate": 115200,
+      "timeout": 1.0,
+      "protocol": "standard"
+    },
+    "processing": {
+      "filter_outliers": true,
+      "moving_average_window": 5,
+      "min_distance": 0.1,
+      "max_distance": 10.0
+    }
+  },
+  "processing": {
+    "image": {
+      "resize": true,
+      "target_width": 640,
+      "target_height": 480,
+      "apply_filters": false,
+      "save_frames": false
+    },
+    "fusion": {
+      "enabled": true,
+      "sync_tolerance_ms": 100,
+      "output_format": "json"
+    }
+  },
+  "output": {
+    "api": {
+      "enabled": true,
+      "host": "0.0.0.0",
+      "port": 8080,
+      "cors_enabled": true
+    },
+    "websocket": {
+      "enabled": true,
+      "host": "0.0.0.0", 
+      "port": 8081
+    },
+    "storage": {
+      "enabled": true,
+      "max_files": 1000,
+      "max_file_size_mb": 10,
+      "compression": true
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "./logs/edge_sdk.log",
+    "max_size_mb": 10,
+    "backup_count": 5,
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  }
+}
