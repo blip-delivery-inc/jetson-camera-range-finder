@@ -90,23 +90,30 @@ class JetsonCamera:
         backends = [cv2.CAP_V4L2, cv2.CAP_ANY]
         
         for backend in backends:
+            cap = None
             try:
-                self.cap = cv2.VideoCapture(self.camera_id, backend)
-                if self.cap.isOpened():
+                cap = cv2.VideoCapture(self.camera_id, backend)
+                if cap.isOpened():
                     # Set camera properties
-                    self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-                    self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-                    self.cap.set(cv2.CAP_PROP_FPS, self.fps)
+                    cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+                    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+                    cap.set(cv2.CAP_PROP_FPS, self.fps)
                     
                     # Test frame capture
-                    ret, frame = self.cap.read()
+                    ret, frame = cap.read()
                     if ret and frame is not None:
+                        self.cap = cap  # Only assign if successful
                         self.is_connected = True
                         logger.info(f"USB camera {self.camera_id} connected successfully")
                         return True
                     else:
-                        self.cap.release()
+                        cap.release()
+                else:
+                    if cap is not None:
+                        cap.release()
             except Exception as e:
+                if cap is not None:
+                    cap.release()
                 logger.warning(f"Backend {backend} failed: {e}")
                 continue
         
@@ -150,19 +157,26 @@ class JetsonCamera:
         
         # Try each pipeline until one works
         for i, gst_pipeline in enumerate(pipelines):
+            cap = None
             try:
                 logger.info(f"Trying CSI pipeline {i+1}/{len(pipelines)}")
-                self.cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
-                if self.cap.isOpened():
+                cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
+                if cap.isOpened():
                     # Test frame capture
-                    ret, frame = self.cap.read()
+                    ret, frame = cap.read()
                     if ret and frame is not None:
+                        self.cap = cap  # Only assign if successful
                         self.is_connected = True
                         logger.info(f"CSI camera {self.camera_id} connected successfully with pipeline {i+1}")
                         return True
                     else:
-                        self.cap.release()
+                        cap.release()
+                else:
+                    if cap is not None:
+                        cap.release()
             except Exception as e:
+                if cap is not None:
+                    cap.release()
                 logger.warning(f"CSI pipeline {i+1} failed: {e}")
                 continue
         
