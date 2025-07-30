@@ -8,8 +8,16 @@ connected cameras (USB, CSI, IP) on the Jetson Orin platform.
 Author: Jetson Orin SDK
 """
 
-import cv2
-import numpy as np
+try:
+    import cv2
+except ImportError:
+    cv2 = None
+    print("Warning: OpenCV not available. Camera functionality will be limited.")
+try:
+    import numpy
+except ImportError:
+    numpy = None
+    print("Warning: NumPy not available. Some functionality may be limited.") as np
 import time
 import logging
 from typing import Optional, Tuple, List
@@ -55,7 +63,11 @@ class CameraManager:
         
         # Check USB cameras (first 10 indices)
         for i in range(10):
+            try:
             cap = cv2.VideoCapture(i)
+        except Exception as e:
+            print(f"Error creating VideoCapture: {e}")
+            return None
             if cap.isOpened():
                 ret, frame = cap.read()
                 if ret:
@@ -79,7 +91,11 @@ class CameraManager:
         csi_devices = ['/dev/video0', '/dev/video1', '/dev/video2']
         for device in csi_devices:
             if Path(device).exists():
-                cap = cv2.VideoCapture(device)
+                try:
+            cap = cv2.VideoCapture(device)
+        except Exception as e:
+            print(f"Error creating VideoCapture: {e}")
+            return None
                 if cap.isOpened():
                     ret, frame = cap.read()
                     if ret:
@@ -114,19 +130,31 @@ class CameraManager:
         """
         try:
             if camera_info['type'] == 'usb':
-                cap = cv2.VideoCapture(camera_info['device_id'])
+                try:
+            cap = cv2.VideoCapture(camera_info['device_id'])
+        except Exception as e:
+            print(f"Error creating VideoCapture: {e}")
+            return None
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_info.get('width', 640))
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_info.get('height', 480))
                 cap.set(cv2.CAP_PROP_FPS, camera_info.get('fps', 30))
                 
             elif camera_info['type'] == 'csi':
-                cap = cv2.VideoCapture(camera_info['device_path'])
+                try:
+            cap = cv2.VideoCapture(camera_info['device_path'])
+        except Exception as e:
+            print(f"Error creating VideoCapture: {e}")
+            return None
                 cap.set(cv2.CAP_PROP_FRAME_WIDTH, camera_info.get('width', 1920))
                 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, camera_info.get('height', 1080))
                 cap.set(cv2.CAP_PROP_FPS, camera_info.get('fps', 30))
                 
             elif camera_info['type'] == 'ip':
-                cap = cv2.VideoCapture(camera_info['url'])
+                try:
+            cap = cv2.VideoCapture(camera_info['url'])
+        except Exception as e:
+            print(f"Error creating VideoCapture: {e}")
+            return None
                 cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 
             else:
@@ -252,7 +280,11 @@ class SimpleCamera:
             True if successful, False otherwise
         """
         try:
-            self.cap = cv2.VideoCapture(self.device_id)
+            self.try:
+            cap = cv2.VideoCapture(self.device_id)
+        except Exception as e:
+            print(f"Error creating VideoCapture: {e}")
+            return None
             if self.cap.isOpened():
                 self.connected = True
                 logger.info(f"Connected to camera device {self.device_id}")

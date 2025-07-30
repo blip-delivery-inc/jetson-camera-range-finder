@@ -8,7 +8,11 @@ connected LIDAR devices (USB, Serial, Ethernet) on the Jetson Orin platform.
 Author: Jetson Orin SDK
 """
 
-import serial
+try:
+    import serial
+except ImportError:
+    serial = None
+    print("Warning: PySerial not available. LIDAR functionality will be limited.")
 import socket
 import time
 import logging
@@ -105,7 +109,7 @@ class LIDARManager:
                                     logger.info(f"Detected USB LIDAR {device} @ {baudrate} baud")
                                 ser.close()
                                 break
-                        except:
+                        except Exception as e:
                             continue
                 except Exception as e:
                     logger.debug(f"Error checking device {device}: {str(e)}")
@@ -230,7 +234,7 @@ class LIDARManager:
                         angle = struct.unpack('<H', angle_bytes)[0] / 10.0  # Convert to degrees
                         
                         return LIDARData(distance, angle)
-                    except:
+                    except Exception as e:
                         # If parsing fails, return raw data as distance
                         distance = len(data) / 1000.0  # Simple fallback
                         return LIDARData(distance, 0.0)
@@ -261,7 +265,7 @@ class LIDARManager:
                         distance = float(parts[0])
                         angle = float(parts[1])
                         return LIDARData(distance, angle)
-                except:
+                except Exception as e:
                     # Fallback parsing
                     distance = len(data) / 1000.0
                     return LIDARData(distance, 0.0)
@@ -384,7 +388,7 @@ class SimpleLIDAR:
                     try:
                         distance = struct.unpack('<H', data[:2])[0] / 1000.0
                         return distance
-                    except:
+                    except Exception as e:
                         # Fallback: use data length as distance indicator
                         return len(data) / 1000.0
             

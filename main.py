@@ -42,7 +42,8 @@ class JetsonOrinSDK:
             output_dir: Directory to save captured data
         """
         self.output_dir = Path(output_dir)
-        self.output_dir.mkdir(exist_ok=True)
+        if not self.output_dir.exists():
+            self.output_dir.mkdir(exist_ok=True)
         
         # Initialize managers
         self.camera_manager = CameraManager()
@@ -83,8 +84,12 @@ class JetsonOrinSDK:
         }
         
         # Save hardware detection results
-        with open(self.output_dir / 'hardware_detection.json', 'w') as f:
-            json.dump(hardware_info, f, indent=2)
+        try:
+            with open(self.output_dir / 'hardware_detection.json', 'w') as f:
+            try:
+                json.dump(hardware_info, f, indent=2)
+            except Exception as e:
+                print(f"Error writing JSON: {e}")
         
         logger.info(f"Hardware detection complete: {hardware_info['total_devices']} devices found")
         return hardware_info
@@ -156,7 +161,11 @@ class JetsonOrinSDK:
                     frame_filename = f"camera_{camera_id}_{capture_time.strftime('%Y%m%d_%H%M%S_%f')}.jpg"
                     frame_path = self.output_dir / frame_filename
                     
-                    import cv2
+                    try:
+    import cv2
+except ImportError:
+    cv2 = None
+    print("Warning: OpenCV not available. Camera functionality will be limited.")
                     if cv2.imwrite(str(frame_path), frame):
                         capture_data['cameras'][camera_id] = {
                             'frame_path': str(frame_path),
@@ -210,8 +219,12 @@ class JetsonOrinSDK:
             'end_time': datetime.now().isoformat()
         }
         
-        with open(self.output_dir / 'capture_summary.json', 'w') as f:
-            json.dump(summary, f, indent=2)
+        try:
+            with open(self.output_dir / 'capture_summary.json', 'w') as f:
+            try:
+                json.dump(summary, f, indent=2)
+            except Exception as e:
+                print(f"Error writing JSON: {e}")
         
         logger.info(f"Data capture complete: {summary}")
         return summary
@@ -238,7 +251,11 @@ class JetsonOrinSDK:
             if frame is not None:
                 frame_filename = f"simple_camera_{datetime.now().strftime('%Y%m%d_%H%M%S')}.jpg"
                 frame_path = self.output_dir / frame_filename
-                import cv2
+                try:
+    import cv2
+except ImportError:
+    cv2 = None
+    print("Warning: OpenCV not available. Camera functionality will be limited.")
                 cv2.imwrite(str(frame_path), frame)
                 
                 capture_data['cameras']['simple'] = {
