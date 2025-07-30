@@ -1,0 +1,24 @@
+{
+  "camera": {
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "format": "MJPG",
+    "device_id": 0,
+    "flip_method": 0,
+    "capture_width": 1920,
+    "capture_height": 1080
+  },
+  "range_finder": {
+    "port": "/dev/ttyUSB0",
+    "baudrate": 115200,
+    "timeout": 1.0,
+    "max_range": 100.0,
+    "min_range": 0.1,
+    "scan_angle": 270.0
+  },
+  "data_output_dir": "./data",
+  "log_level": "INFO",
+  "enable_camera": true,
+  "enable_range_finder": true
+}
