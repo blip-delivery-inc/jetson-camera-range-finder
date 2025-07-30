@@ -1,28 +1,44 @@
 # Jetson Orin Integration SDK Dependencies
+# Note: For production Jetson deployment, prefer system packages via apt
+
 # Core computer vision and image processing
-opencv-python==4.8.1.78
+# Use system package: sudo apt install python3-opencv
+opencv-python>=4.5.0
 
 # Serial communication for LIDAR
-pyserial==3.5
+# Use system package: sudo apt install python3-serial
+pyserial>=3.4
 
 # Network communication for IP cameras
-requests==2.31.0
+# Use system package: sudo apt install python3-requests
+requests>=2.25.0
 
 # Data handling and manipulation
-numpy==1.24.3
+# Use system package: sudo apt install python3-numpy
+numpy>=1.19.0
 
 # Logging and configuration
-pyyaml==6.0.1
+# Use system package: sudo apt install python3-yaml
+pyyaml>=5.4.0
 
-# Optional: For advanced camera features
-Pillow==10.0.1
+# Image processing
+# Use system package: sudo apt install python3-pil
+Pillow>=8.0.0
 
-# Optional: For ROS2 integration (uncomment if needed)
-# rclpy==3.3.11
-
-# Optional: For web server functionality (uncomment if needed)
-# flask==2.3.3
-# flask-cors==4.0.0
+# System monitoring for benchmarks
+psutil>=5.8.0
 
 # Development and testing
-pytest==7.4.2
+# Use system package: sudo apt install python3-pytest
+pytest>=6.0.0
+
+# Optional: For ROS2 integration (uncomment if needed)
+# rclpy>=3.3.0
+
+# Optional: For web server functionality (uncomment if needed)
+# flask>=2.0.0
+# flask-cors>=3.0.0
+
+# Optional: For advanced LIDAR processing
+# scipy>=1.7.0
+# matplotlib>=3.3.0

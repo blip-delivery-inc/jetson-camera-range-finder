@@ -20,8 +20,10 @@ import json
 import logging
 import argparse
 import threading
+import cv2
 from datetime import datetime
 from pathlib import Path
+from threading import Lock
 
 # Import SDK modules
 from camera import JetsonCamera, detect_cameras, CameraError
@@ -54,6 +56,14 @@ class JetsonSDK:
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
         
+        # Validate output directory is writable
+        try:
+            test_file = self.output_dir / ".write_test"
+            test_file.write_text("test")
+            test_file.unlink()
+        except (PermissionError, OSError) as e:
+            raise RuntimeError(f"Output directory is not writable: {output_dir}. Error: {e}")
+        
         # Device instances
         self.camera = None
         self.lidar = None
@@ -63,7 +73,8 @@ class JetsonSDK:
         self.data_thread = None
         self.collected_data = []
         
-        # Statistics
+        # Statistics (thread-safe)
+        self.stats_lock = Lock()
         self.stats = {
             "images_captured": 0,
             "lidar_scans": 0,
@@ -214,7 +225,6 @@ class JetsonSDK:
                     image_filename = f"image_{int(timestamp)}.jpg"
                     image_path = self.output_dir / image_filename
                     
-                    import cv2
                     cv2.imwrite(str(image_path), frame)
                     
                     data["camera"] = {
@@ -222,16 +232,19 @@ class JetsonSDK:
                         "shape": frame.shape,
                         "success": True
                     }
-                    self.stats["images_captured"] += 1
+                    with self.stats_lock:
+                        self.stats["images_captured"] += 1
                     logger.info(f"Image captured: {image_filename}")
                 else:
                     data["errors"].append("Failed to capture camera frame")
-                    self.stats["errors"] += 1
+                    with self.stats_lock:
+                        self.stats["errors"] += 1
             except Exception as e:
                 error_msg = f"Camera capture error: {e}"
                 data["errors"].append(error_msg)
                 logger.error(error_msg)
-                self.stats["errors"] += 1
+                with self.stats_lock:
+                    self.stats["errors"] += 1
         
         # Capture LIDAR data
         if self.lidar:
@@ -248,12 +261,14 @@ class JetsonSDK:
                     logger.info(f"LIDAR measurement: {measurement.distance}mm at {measurement.angle}°")
                 else:
                     data["errors"].append("Failed to get LIDAR measurement")
-                    self.stats["errors"] += 1
+                    with self.stats_lock:
+                        self.stats["errors"] += 1
             except Exception as e:
                 error_msg = f"LIDAR capture error: {e}"
                 data["errors"].append(error_msg)
                 logger.error(error_msg)
-                self.stats["errors"] += 1
+                with self.stats_lock:
+                    self.stats["errors"] += 1
         
         return data
     
@@ -270,7 +285,8 @@ class JetsonSDK:
             return
         
         self.is_running = True
-        self.stats["start_time"] = time.time()
+        with self.stats_lock:
+            self.stats["start_time"] = time.time()
         
         logger.info(f"Starting continuous capture (interval: {interval}s, duration: {duration}s)")
         
@@ -278,17 +294,29 @@ class JetsonSDK:
             start_time = time.time()
             
             while self.is_running:
-                # Check duration limit
-                if duration and (time.time() - start_time) >= duration:
-                    logger.info("Duration limit reached, stopping capture")
-                    break
-                
-                # Capture data
-                data = self.capture_single_data()
-                self.collected_data.append(data)
-                
-                # Update statistics
-                self.stats["runtime"] = time.time() - self.stats["start_time"]
+                try:
+                    # Check duration limit
+                    if duration and (time.time() - start_time) >= duration:
+                        logger.info("Duration limit reached, stopping capture")
+                        break
+                    
+                    # Capture data
+                    data = self.capture_single_data()
+                    self.collected_data.append(data)
+                    
+                    # Update statistics
+                    with self.stats_lock:
+                        self.stats["runtime"] = time.time() - self.stats["start_time"]
+                    
+                except Exception as e:
+                    logger.error(f"Error in continuous capture: {e}")
+                    with self.stats_lock:
+                        self.stats["errors"] += 1
+                        error_count = self.stats["errors"]
+                    # Continue running unless it's a critical error
+                    if error_count > 10:  # Stop after too many consecutive errors
+                        logger.error("Too many capture errors, stopping continuous capture")
+                        break
                 
                 # Wait for next capture
                 time.sleep(interval)
@@ -327,7 +355,8 @@ class JetsonSDK:
         Returns:
             dict: Statistics information
         """
-        stats = self.stats.copy()
+        with self.stats_lock:
+            stats = self.stats.copy()
         
         if stats["start_time"]:
             stats["runtime"] = time.time() - stats["start_time"]
@@ -400,21 +429,25 @@ class JetsonSDK:
         logger.info("Cleaning up SDK resources...")
         
         # Stop any running captures
-        if self.is_running:
+        if hasattr(self, 'is_running') and self.is_running:
             self.stop_continuous_capture()
         
         # Disconnect devices
-        if self.camera:
+        if hasattr(self, 'camera') and self.camera:
             self.camera.disconnect()
         
-        if self.lidar:
+        if hasattr(self, 'lidar') and self.lidar:
             self.lidar.disconnect()
         
         logger.info("SDK cleanup completed")
     
     def __del__(self):
         """Destructor to ensure cleanup"""
-        self.cleanup()
+        try:
+            self.cleanup()
+        except AttributeError:
+            # Handle case where object wasn't fully initialized
+            pass
 
 
 def main():

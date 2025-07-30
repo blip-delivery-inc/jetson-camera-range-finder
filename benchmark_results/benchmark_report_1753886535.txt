@@ -1,0 +1,23 @@
+============================================================
+JETSON ORIN SDK PERFORMANCE BENCHMARK REPORT
+============================================================
+Timestamp: 2025-07-30T14:42:13.429760
+
+SYSTEM INFORMATION:
+  Platform: Unknown
+  CPU Cores: 4
+  Total Memory: 15.62 GB
+  OpenCV Version: 4.12.0
+  JetPack Version: None
+
+LIDAR PERFORMANCE:
+  Detection Time: 0.001s
+  LIDAR Devices: 1
+
+RESOURCE USAGE:
+  Average CPU: 1.0%
+  Peak CPU: 1.0%
+  Average Memory: 7.3%
+  Peak Memory: 0.81 GB
+
+============================================================

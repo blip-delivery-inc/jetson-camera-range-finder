@@ -56,6 +56,24 @@ class JetsonCamera:
         self.cap = None
         self.is_connected = False
         
+        # Validate camera ID
+        if camera_id < 0:
+            raise CameraError(f"Camera ID must be non-negative, got: {camera_id}")
+        
+        # Validate dimensions
+        if width <= 0 or height <= 0:
+            raise CameraError(f"Width and height must be positive, got: {width}x{height}")
+        
+        # Validate reasonable dimension limits
+        if width > 10000 or height > 10000:
+            raise CameraError(f"Dimensions too large (max 10000x10000), got: {width}x{height}")
+        
+        # Validate FPS
+        if fps <= 0:
+            raise CameraError(f"FPS must be positive, got: {fps}")
+        if fps > 240:  # Reasonable upper limit for most cameras
+            raise CameraError(f"FPS too high (max 240), got: {fps}")
+        
         # Validate camera type
         if self.camera_type not in ["usb", "csi", "ip"]:
             raise CameraError(f"Unsupported camera type: {camera_type}")
@@ -90,23 +108,30 @@ class JetsonCamera:
         backends = [cv2.CAP_V4L2, cv2.CAP_ANY]
         
         for backend in backends:
+            cap = None
             try:
-                self.cap = cv2.VideoCapture(self.camera_id, backend)
-                if self.cap.isOpened():
+                cap = cv2.VideoCapture(self.camera_id, backend)
+                if cap.isOpened():
                     # Set camera properties
-                    self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-                    self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-                    self.cap.set(cv2.CAP_PROP_FPS, self.fps)
+                    cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
+                    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+                    cap.set(cv2.CAP_PROP_FPS, self.fps)
                     
                     # Test frame capture
-                    ret, frame = self.cap.read()
+                    ret, frame = cap.read()
                     if ret and frame is not None:
+                        self.cap = cap  # Only assign if successful
                         self.is_connected = True
                         logger.info(f"USB camera {self.camera_id} connected successfully")
                         return True
                     else:
-                        self.cap.release()
+                        cap.release()
+                else:
+                    if cap is not None:
+                        cap.release()
             except Exception as e:
+                if cap is not None:
+                    cap.release()
                 logger.warning(f"Backend {backend} failed: {e}")
                 continue
         
@@ -117,32 +142,63 @@ class JetsonCamera:
         """Connect to CSI camera using GStreamer pipeline"""
         logger.info(f"Connecting to CSI camera {self.camera_id}")
         
-        # GStreamer pipeline for CSI camera on Jetson
-        gst_pipeline = (
-            f"nvarguscamerasrc sensor-id={self.camera_id} ! "
-            f"video/x-raw(memory:NVMM), width={self.width}, height={self.height}, "
-            f"format=NV12, framerate={self.fps}/1 ! "
-            "nvvidconv flip-method=0 ! "
-            "video/x-raw, width=1920, height=1080, format=BGRx ! "
-            "videoconvert ! "
-            "video/x-raw, format=BGR ! appsink"
-        )
+        # Try multiple GStreamer pipelines for better compatibility
+        pipelines = [
+            # NVIDIA Argus camera pipeline (preferred for Jetson)
+            (
+                f"nvarguscamerasrc sensor-id={self.camera_id} ! "
+                f"video/x-raw(memory:NVMM), width={self.width}, height={self.height}, "
+                f"format=NV12, framerate={self.fps}/1 ! "
+                "nvvidconv flip-method=0 ! "
+                f"video/x-raw, width={self.width}, height={self.height}, format=BGRx ! "
+                "videoconvert ! "
+                "video/x-raw, format=BGR ! appsink drop=1"
+            ),
+            # Alternative pipeline without NVMM memory
+            (
+                f"nvarguscamerasrc sensor-id={self.camera_id} ! "
+                f"video/x-raw, width={self.width}, height={self.height}, "
+                f"format=NV12, framerate={self.fps}/1 ! "
+                "nvvidconv ! "
+                "video/x-raw, format=BGRx ! "
+                "videoconvert ! "
+                "video/x-raw, format=BGR ! appsink"
+            ),
+            # Fallback V4L2 pipeline
+            (
+                f"v4l2src device=/dev/video{self.camera_id} ! "
+                f"video/x-raw, width={self.width}, height={self.height}, framerate={self.fps}/1 ! "
+                "videoconvert ! "
+                "video/x-raw, format=BGR ! appsink"
+            )
+        ]
         
-        try:
-            self.cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
-            if self.cap.isOpened():
-                # Test frame capture
-                ret, frame = self.cap.read()
-                if ret and frame is not None:
-                    self.is_connected = True
-                    logger.info(f"CSI camera {self.camera_id} connected successfully")
-                    return True
+        # Try each pipeline until one works
+        for i, gst_pipeline in enumerate(pipelines):
+            cap = None
+            try:
+                logger.info(f"Trying CSI pipeline {i+1}/{len(pipelines)}")
+                cap = cv2.VideoCapture(gst_pipeline, cv2.CAP_GSTREAMER)
+                if cap.isOpened():
+                    # Test frame capture
+                    ret, frame = cap.read()
+                    if ret and frame is not None:
+                        self.cap = cap  # Only assign if successful
+                        self.is_connected = True
+                        logger.info(f"CSI camera {self.camera_id} connected successfully with pipeline {i+1}")
+                        return True
+                    else:
+                        cap.release()
                 else:
-                    self.cap.release()
-        except Exception as e:
-            logger.error(f"CSI camera connection failed: {e}")
+                    if cap is not None:
+                        cap.release()
+            except Exception as e:
+                if cap is not None:
+                    cap.release()
+                logger.warning(f"CSI pipeline {i+1} failed: {e}")
+                continue
         
-        logger.error(f"Failed to connect to CSI camera {self.camera_id}")
+        logger.error(f"Failed to connect to CSI camera {self.camera_id} with all pipelines")
         return False
     
     def _connect_ip(self) -> bool:
@@ -311,7 +367,8 @@ def detect_cameras() -> Dict[str, list]:
                     detected["csi"].append(i)
                     logger.info(f"CSI camera detected at sensor-id {i}")
                 cap.release()
-        except Exception:
+        except Exception as e:
+            logger.debug(f"CSI camera {i} detection failed: {e}")
             continue
     
     return detected
