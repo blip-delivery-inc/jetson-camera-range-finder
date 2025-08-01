@@ -15,8 +15,16 @@ import numpy as np
 import requests
 import logging
 import time
-from typing import Optional, Tuple, Dict, Any
+from typing import Optional, Tuple, Dict, Any, List
 from urllib.parse import urlparse
+
+# Import YOLO detector if available
+try:
+    from yolo_detector import YOLODetector, YOLOError
+    YOLO_AVAILABLE = True
+except ImportError:
+    YOLO_AVAILABLE = False
+    logging.warning("YOLO detector not available. Install ultralytics for object detection features.")
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +43,9 @@ class JetsonCamera:
     """
     
     def __init__(self, camera_id: int = 0, camera_type: str = "usb", 
-                 ip_url: str = None, width: int = 1920, height: int = 1080, fps: int = 30):
+                 ip_url: str = None, width: int = 1920, height: int = 1080, fps: int = 30,
+                 enable_yolo: bool = False, yolo_model: str = "yolov8n.pt", 
+                 yolo_confidence: float = 0.5):
         """
         Initialize camera interface
         
@@ -46,6 +56,9 @@ class JetsonCamera:
             width: Frame width
             height: Frame height
             fps: Frames per second
+            enable_yolo: Enable YOLO object detection
+            yolo_model: YOLO model path/name
+            yolo_confidence: YOLO confidence threshold
         """
         self.camera_id = camera_id
         self.camera_type = camera_type.lower()
@@ -55,6 +68,23 @@ class JetsonCamera:
         self.fps = fps
         self.cap = None
         self.is_connected = False
+        
+        # YOLO detection setup
+        self.enable_yolo = enable_yolo
+        self.yolo_detector = None
+        if self.enable_yolo and YOLO_AVAILABLE:
+            try:
+                self.yolo_detector = YOLODetector(
+                    model_path=yolo_model,
+                    confidence_threshold=yolo_confidence
+                )
+                logger.info("YOLO detector initialized successfully")
+            except Exception as e:
+                logger.warning(f"Failed to initialize YOLO detector: {e}")
+                self.enable_yolo = False
+        elif self.enable_yolo and not YOLO_AVAILABLE:
+            logger.warning("YOLO requested but not available. Install ultralytics package.")
+            self.enable_yolo = False
         
         # Validate camera type
         if self.camera_type not in ["usb", "csi", "ip"]:
@@ -267,6 +297,127 @@ class JetsonCamera:
             self.cap.release()
             self.is_connected = False
             logger.info(f"{self.camera_type.upper()} camera disconnected")
+    
+    def capture_frame_with_detection(self, annotate: bool = True, save_results: bool = False,
+                                   output_path: Optional[str] = None) -> Tuple[bool, Optional[np.ndarray], Optional[Dict[str, Any]]]:
+        """
+        Capture a frame and perform YOLO object detection
+        
+        Args:
+            annotate: Whether to draw bounding boxes on the frame
+            save_results: Whether to save detection results
+            output_path: Path to save detection results
+        
+        Returns:
+            Tuple[bool, Optional[np.ndarray], Optional[Dict]]: (success, frame/annotated_frame, detection_results)
+        """
+        if not self.enable_yolo or not self.yolo_detector:
+            logger.warning("YOLO detection not enabled or not available")
+            ret, frame = self.capture_frame()
+            return ret, frame, None
+        
+        # Capture frame
+        ret, frame = self.capture_frame()
+        if not ret or frame is None:
+            return False, None, None
+        
+        try:
+            # Perform detection
+            results = self.yolo_detector.detect(
+                frame, 
+                annotate=annotate, 
+                save_results=save_results,
+                output_path=output_path
+            )
+            
+            return True, results['annotated_image'], results
+            
+        except Exception as e:
+            logger.error(f"YOLO detection failed: {e}")
+            return ret, frame, None
+    
+    def get_yolo_statistics(self) -> Optional[Dict[str, Any]]:
+        """
+        Get YOLO detection statistics
+        
+        Returns:
+            Dict: YOLO statistics or None if YOLO not enabled
+        """
+        if self.enable_yolo and self.yolo_detector:
+            return self.yolo_detector.get_statistics()
+        return None
+    
+    def set_yolo_confidence(self, confidence: float):
+        """
+        Set YOLO confidence threshold
+        
+        Args:
+            confidence: New confidence threshold (0.0-1.0)
+        """
+        if self.enable_yolo and self.yolo_detector:
+            self.yolo_detector.set_confidence_threshold(confidence)
+        else:
+            logger.warning("YOLO detection not enabled")
+    
+    def enable_yolo_detection(self, model_path: str = "yolov8n.pt", confidence: float = 0.5):
+        """
+        Enable YOLO detection on this camera
+        
+        Args:
+            model_path: Path to YOLO model
+            confidence: Confidence threshold
+        """
+        if not YOLO_AVAILABLE:
+            logger.error("YOLO not available. Install ultralytics package.")
+            return False
+        
+        try:
+            self.yolo_detector = YOLODetector(
+                model_path=model_path,
+                confidence_threshold=confidence
+            )
+            self.enable_yolo = True
+            logger.info("YOLO detection enabled")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to enable YOLO detection: {e}")
+            return False
+    
+    def disable_yolo_detection(self):
+        """Disable YOLO detection"""
+        self.enable_yolo = False
+        self.yolo_detector = None
+        logger.info("YOLO detection disabled")
+    
+    def filter_detections_by_class(self, detections: List[Dict[str, Any]], 
+                                 target_classes: List[str]) -> List[Dict[str, Any]]:
+        """
+        Filter detections by class names
+        
+        Args:
+            detections: List of detection results
+            target_classes: List of class names to keep
+            
+        Returns:
+            Filtered detections
+        """
+        if self.enable_yolo and self.yolo_detector:
+            return self.yolo_detector.filter_detections_by_class(detections, target_classes)
+        return []
+    
+    def count_objects_by_class(self, detections: List[Dict[str, Any]]) -> Dict[str, int]:
+        """
+        Count detected objects by class
+        
+        Args:
+            detections: List of detection results
+            
+        Returns:
+            Dictionary with class counts
+        """
+        if self.enable_yolo and self.yolo_detector:
+            return self.yolo_detector.count_objects_by_class(detections)
+        return {}
     
     def __del__(self):
         """Destructor to ensure proper cleanup"""

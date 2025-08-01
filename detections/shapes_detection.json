@@ -1,0 +1,27 @@
+{
+  "timestamp": "2025-08-01T17:58:38.941658",
+  "detections": [
+    {
+      "id": 0,
+      "class_id": 29,
+      "class_name": "frisbee",
+      "confidence": 0.9140565991401672,
+      "bbox": {
+        "x1": 420,
+        "y1": 70,
+        "x2": 581,
+        "y2": 232,
+        "width": 161,
+        "height": 162,
+        "center_x": 501,
+        "center_y": 151
+      }
+    }
+  ],
+  "detection_count": 1,
+  "model_info": {
+    "model_path": "yolov8n.pt",
+    "confidence_threshold": 0.3,
+    "iou_threshold": 0.45
+  }
+}

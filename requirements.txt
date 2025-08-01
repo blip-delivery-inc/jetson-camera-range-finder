@@ -1,21 +1,21 @@
 # Jetson Orin Integration SDK Dependencies
 # Core computer vision and image processing
-opencv-python==4.8.1.78
+opencv-python>=4.8.0
 
 # Serial communication for LIDAR
-pyserial==3.5
+pyserial>=3.5
 
 # Network communication for IP cameras
-requests==2.31.0
+requests>=2.31.0
 
 # Data handling and manipulation
-numpy==1.24.3
+numpy>=1.24.0
 
 # Logging and configuration
-pyyaml==6.0.1
+pyyaml>=6.0.1
 
 # Optional: For advanced camera features
-Pillow==10.0.1
+Pillow>=10.0.0
 
 # Optional: For ROS2 integration (uncomment if needed)
 # rclpy==3.3.11
@@ -23,6 +23,11 @@ Pillow==10.0.1
 # Optional: For web server functionality (uncomment if needed)
 # flask==2.3.3
 # flask-cors==4.0.0
+
+# AI/ML and Object Detection
+ultralytics>=8.3.0
+torch>=2.0.0
+torchvision>=0.15.0
 
 # Development and testing
 pytest==7.4.2

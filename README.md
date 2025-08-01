@@ -30,9 +30,20 @@ A comprehensive SDK for integrating camera and LIDAR sensors on the NVIDIA Jetso
 - **Generic Serial**: Support for custom LIDAR protocols
 - **Multiple Interfaces**: USB, Serial (UART/RS232), and Ethernet connections
 
+### YOLO Object Detection
+- **YOLOv8 Integration**: State-of-the-art object detection using Ultralytics YOLOv8
+- **Real-time Inference**: Live object detection on camera feeds
+- **80 COCO Classes**: Detection of common objects (person, car, dog, laptop, etc.)
+- **Configurable Confidence**: Adjustable detection thresholds
+- **Bounding Box Visualization**: Automatic annotation of detected objects
+- **Performance Optimized**: GPU acceleration support (CUDA when available)
+- **Detection Statistics**: Comprehensive performance metrics and logging
+- **Multiple Model Support**: Support for different YOLO model sizes (nano, small, medium, large, extra-large)
+
 ### Key Capabilities
 - **Hardware Auto-Detection**: Automatic discovery of connected cameras and LIDAR devices
 - **Real-time Data Acquisition**: Continuous capture with configurable intervals
+- **YOLO Object Detection**: Real-time object detection and classification using YOLOv8
 - **Data Logging**: JSON-based logging with timestamps
 - **Error Handling**: Robust error detection and recovery
 - **Modular Design**: Clean, extensible architecture
@@ -71,7 +82,11 @@ cd jetson-orin-sdk
 
 2. **Install Python dependencies**:
 ```bash
+# Basic installation
 pip3 install -r requirements.txt
+
+# For YOLO object detection (recommended)
+pip3 install ultralytics torch torchvision
 ```
 
 3. **Verify installation**:
@@ -103,6 +118,16 @@ python3 main.py --mode single --camera-type usb --lidar-type generic_serial
 python3 main.py --mode continuous --duration 60 --interval 2.0
 ```
 
+5. **YOLO Object Detection Demo**:
+```bash
+python3 main.py --mode yolo --duration 30 --yolo-confidence 0.5
+```
+
+6. **Single Capture with YOLO**:
+```bash
+python3 main.py --mode single --enable-yolo --yolo-model yolov8n.pt --yolo-confidence 0.6
+```
+
 ### Python API Usage
 
 ```python
@@ -132,6 +157,38 @@ print(f"Captured data: {data}")
 
 # Cleanup
 sdk.cleanup()
+```
+
+### YOLO Object Detection API
+
+```python
+from camera import JetsonCamera
+from yolo_detector import YOLODetector, detect_objects_in_image
+from main import JetsonSDK
+
+# Method 1: Direct YOLO detector usage
+detector = YOLODetector(confidence_threshold=0.5)
+results = detect_objects_in_image("image.jpg", save_results=True)
+print(f"Detected {results['detection_count']} objects")
+
+# Method 2: Camera with YOLO integration
+camera = JetsonCamera(camera_type="usb", camera_id=0, enable_yolo=True, yolo_confidence=0.6)
+if camera.connect():
+    success, annotated_frame, detection_results = camera.capture_frame_with_detection()
+    if success and detection_results:
+        for detection in detection_results['detections']:
+            print(f"Found {detection['class_name']} with confidence {detection['confidence']:.2f}")
+
+# Method 3: SDK with YOLO
+sdk = JetsonSDK()
+if sdk.setup_camera("usb", 0):
+    sdk.enable_yolo_detection(confidence=0.5)
+    result = sdk.capture_with_detection(save_results=True)
+    print(f"Detection result: {result}")
+    
+    # Get performance statistics
+    stats = sdk.get_yolo_statistics()
+    print(f"YOLO FPS: {stats['fps']:.1f}")
 ```
 
 ## Configuration
@@ -491,5 +548,5 @@ This project is licensed under the MIT License. See LICENSE file for details.
 - [ ] Multiple camera streams
 - [ ] Advanced LIDAR filtering
 - [ ] Web-based monitoring interface
-- [ ] Machine learning integration
+- [x] Machine learning integration (YOLO object detection)
 - [ ] Point cloud processing

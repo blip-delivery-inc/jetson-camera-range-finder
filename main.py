@@ -125,7 +125,8 @@ class JetsonSDK:
                 ip_url=ip_url,
                 width=1920,
                 height=1080,
-                fps=30
+                fps=30,
+                enable_yolo=False  # Can be enabled later
             )
             
             if self.camera.connect():
@@ -340,6 +341,147 @@ class JetsonSDK:
         
         return stats
     
+    def enable_yolo_detection(self, model_path: str = "yolov8n.pt", confidence: float = 0.5) -> bool:
+        """
+        Enable YOLO object detection on the camera
+        
+        Args:
+            model_path: Path to YOLO model
+            confidence: Confidence threshold
+            
+        Returns:
+            bool: Success status
+        """
+        if not self.camera:
+            logger.error("Camera not initialized. Call setup_camera() first.")
+            return False
+        
+        return self.camera.enable_yolo_detection(model_path, confidence)
+    
+    def capture_with_detection(self, save_results: bool = True, 
+                             output_dir: str = None) -> dict:
+        """
+        Capture image with YOLO object detection
+        
+        Args:
+            save_results: Whether to save detection results
+            output_dir: Output directory for results
+            
+        Returns:
+            dict: Capture data with detection results
+        """
+        if not self.camera:
+            logger.error("Camera not initialized")
+            return {"error": "Camera not initialized"}
+        
+        timestamp = time.time()
+        output_path = None
+        
+        if save_results:
+            if not output_dir:
+                output_dir = self.output_dir / "detections"
+            
+            output_dir = Path(output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            output_path = str(output_dir / f"detection_{int(timestamp)}.json")
+        
+        try:
+            ret, annotated_frame, detection_results = self.camera.capture_frame_with_detection(
+                annotate=True,
+                save_results=save_results,
+                output_path=output_path
+            )
+            
+            if ret:
+                # Save annotated image
+                if save_results:
+                    image_path = output_dir / f"annotated_{int(timestamp)}.jpg"
+                    import cv2
+                    cv2.imwrite(str(image_path), annotated_frame)
+                
+                return {
+                    "timestamp": timestamp,
+                    "datetime": datetime.fromtimestamp(timestamp).isoformat(),
+                    "success": True,
+                    "detection_results": detection_results,
+                    "image_saved": str(image_path) if save_results else None,
+                    "detection_file": output_path if save_results else None
+                }
+            else:
+                return {
+                    "timestamp": timestamp,
+                    "success": False,
+                    "error": "Failed to capture frame"
+                }
+                
+        except Exception as e:
+            logger.error(f"Detection capture failed: {e}")
+            return {
+                "timestamp": timestamp,
+                "success": False,
+                "error": str(e)
+            }
+    
+    def get_yolo_statistics(self) -> dict:
+        """
+        Get YOLO detection statistics
+        
+        Returns:
+            dict: YOLO statistics
+        """
+        if not self.camera:
+            return {"error": "Camera not initialized"}
+        
+        yolo_stats = self.camera.get_yolo_statistics()
+        if yolo_stats:
+            return yolo_stats
+        else:
+            return {"error": "YOLO not enabled or not available"}
+    
+    def run_yolo_demo(self, duration: float = 30.0, confidence: float = 0.5):
+        """
+        Run a YOLO object detection demonstration
+        
+        Args:
+            duration: Demo duration in seconds
+            confidence: Detection confidence threshold
+        """
+        logger.info(f"Starting YOLO detection demo for {duration} seconds...")
+        
+        # Enable YOLO detection
+        if not self.enable_yolo_detection(confidence=confidence):
+            logger.error("Failed to enable YOLO detection")
+            return
+        
+        start_time = time.time()
+        detection_count = 0
+        
+        try:
+            while time.time() - start_time < duration:
+                result = self.capture_with_detection(save_results=True)
+                
+                if result.get("success"):
+                    detection_results = result.get("detection_results", {})
+                    detections = detection_results.get("detections", [])
+                    
+                    if detections:
+                        detection_count += len(detections)
+                        object_counts = self.camera.count_objects_by_class(detections)
+                        logger.info(f"Detected objects: {object_counts}")
+                    else:
+                        logger.info("No objects detected in this frame")
+                
+                time.sleep(1.0)  # 1 FPS for demo
+        
+        except KeyboardInterrupt:
+            logger.info("Demo interrupted by user")
+        
+        # Show final statistics
+        yolo_stats = self.get_yolo_statistics()
+        logger.info(f"YOLO Demo completed!")
+        logger.info(f"Total detections processed: {detection_count}")
+        logger.info(f"YOLO Statistics: {yolo_stats}")
+    
     def run_demo(self, duration: float = 30.0):
         """
         Run a demonstration of SDK capabilities
@@ -420,7 +562,7 @@ class JetsonSDK:
 def main():
     """Main function with command-line interface"""
     parser = argparse.ArgumentParser(description="Jetson Orin Integration SDK")
-    parser.add_argument("--mode", choices=["demo", "detect", "single", "continuous"], 
+    parser.add_argument("--mode", choices=["demo", "detect", "single", "continuous", "yolo"], 
                        default="demo", help="Operation mode")
     parser.add_argument("--duration", type=float, default=30.0, 
                        help="Duration for demo/continuous mode (seconds)")
@@ -443,6 +585,14 @@ def main():
     parser.add_argument("--output-dir", type=str, default="data", 
                        help="Output directory")
     
+    # YOLO-specific arguments
+    parser.add_argument("--enable-yolo", action="store_true", 
+                       help="Enable YOLO object detection")
+    parser.add_argument("--yolo-model", type=str, default="yolov8n.pt", 
+                       help="YOLO model path/name")
+    parser.add_argument("--yolo-confidence", type=float, default=0.5, 
+                       help="YOLO confidence threshold")
+    
     args = parser.parse_args()
     
     # Initialize SDK
@@ -459,12 +609,22 @@ def main():
             # Setup devices
             if sdk.setup_camera(args.camera_type, args.camera_id, args.camera_ip):
                 logger.info("Camera setup successful")
+                
+                # Enable YOLO if requested
+                if args.enable_yolo:
+                    if sdk.enable_yolo_detection(args.yolo_model, args.yolo_confidence):
+                        logger.info("YOLO detection enabled")
+                    else:
+                        logger.warning("Failed to enable YOLO detection")
             
             if sdk.setup_lidar(args.lidar_type, args.lidar_port, args.lidar_baudrate):
                 logger.info("LIDAR setup successful")
             
-            # Capture data
-            data = sdk.capture_single_data()
+            # Capture data (with YOLO if enabled)
+            if args.enable_yolo and sdk.camera and sdk.camera.enable_yolo:
+                data = sdk.capture_with_detection()
+            else:
+                data = sdk.capture_single_data()
             print(json.dumps(data, indent=2))
             
         elif args.mode == "continuous":
@@ -482,6 +642,14 @@ def main():
                 stats = sdk.get_statistics()
                 print(f"Runtime: {stats['runtime']:.1f}s, Images: {stats['images_captured']}, Errors: {stats['errors']}")
             
+        elif args.mode == "yolo":
+            # YOLO object detection demo
+            # Setup camera only (YOLO doesn't need LIDAR)
+            if sdk.setup_camera(args.camera_type, args.camera_id, args.camera_ip):
+                sdk.run_yolo_demo(args.duration, args.yolo_confidence)
+            else:
+                logger.error("Failed to setup camera for YOLO demo")
+                
         else:  # demo mode
             # Run full demonstration
             sdk.run_demo(args.duration)
