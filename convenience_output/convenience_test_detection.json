@@ -1,0 +1,10 @@
+{
+  "timestamp": "2025-08-01T17:58:39.425390",
+  "detections": [],
+  "detection_count": 0,
+  "model_info": {
+    "model_path": "yolov8n.pt",
+    "confidence_threshold": 0.3,
+    "iou_threshold": 0.45
+  }
+}
